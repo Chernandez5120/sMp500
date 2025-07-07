@@ -35,20 +35,20 @@ try:
 except Exception as e:
     print(f"✗ matplotlib import failed: {e}")
 
-# Now try to import main module
+# Now try to import GBM module
 try:
     # Clear any cached imports that might be causing issues
-    if 'main' in sys.modules:
-        del sys.modules['main']
+    if 'GBM' in sys.modules:
+        del sys.modules['GBM']
     
-    import main
-    print("✓ Successfully imported main module")
+    import GBM
+    print("✓ Successfully imported GBM module")
 except ImportError as e:
-    print(f"✗ Failed to import main module: {e}")
-    main = None
+    print(f"✗ Failed to import GBM module: {e}")
+    GBM = None
 except Exception as e:
-    print(f"✗ Unexpected error importing main module: {e}")
-    main = None
+    print(f"✗ Unexpected error importing GBM module: {e}")
+    GBM = None
 
 app = Flask(__name__)
 
@@ -60,7 +60,7 @@ def index():
 # API endpoint for running the simulation
 @app.route('/run_simulation', methods=['POST'])
 def run_simulation_api():
-    if main is None:
+    if GBM is None:
         return jsonify({"error": "Simulation module is not available. This is likely due to missing dependencies (NumPy/yfinance). Please check the console for import errors.", "success": False}), 500
     
     data = request.get_json()
@@ -72,8 +72,8 @@ def run_simulation_api():
         return jsonify({"error": "Missing parameters"}), 400
 
     try:
-        # Call the simulation function from main.py
-        img_str, output_text = main.run_monte_carlo_simulation(ticker, float(years), int(sims))
+        # Call the simulation function from GBM.py
+        img_str, output_text = GBM.run_monte_carlo_simulation(ticker, float(years), int(sims))
         return jsonify({
             "image": img_str,
             "text": output_text,
