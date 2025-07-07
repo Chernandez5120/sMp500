@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Stock Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f0f2f5;
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        label {
+            flex: 1;
+            text-align: left;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            flex: 2;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px dashed #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            min-height: 100px;
+            text-align: left; /* Keep text aligned left within output */
+        }
+        #output pre {
+            white-space: pre-wrap; /* Ensures text wraps */
+            word-wrap: break-word; /* Breaks long words */
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #555;
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto; /* For very long lines */
+        }
+        #output img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: block; /* Ensure image takes full width and new line */
+        }
+        .error-message {
+            color: #d9534f;
+            font-weight: bold;
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 Stock Price Simulator</h1>
+
+        <div class="input-group">
+            <label for="ticker">Stock Ticker:</label>
+            <input type="text" id="ticker" value="AAPL">
+        </div>
+
+        <div class="input-group">
+            <label for="years">Forecast Years:</label>
+            <input type="number" id="years" value="1" step="0.1" min="0.1">
+        </div>
+
+        <div class="input-group">
+            <label for="sims">Number of Simulations:</label>
+            <input type="number" id="sims" value="50" min="10">
+        </div>
+
+        <button id="runSimulationBtn">Run Simulation</button>
+
+        <div id="output">
+            <p>Enter stock details and click 'Run Simulation'.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('runSimulationBtn').addEventListener('click', async () => {
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = '<p style="color: #007bff; font-weight: bold;">Running simulation... Please wait, this might take a moment.</p>';
+
+            const ticker = document.getElementById('ticker').value;
+            const years = parseFloat(document.getElementById('years').value); // Convert to float
+            const sims = parseInt(document.getElementById('sims').value);     // Convert to int
+
+            // Basic client-side validation
+            if (!ticker || isNaN(years) || isNaN(sims) || years <= 0 || sims < 1) {
+                outputDiv.innerHTML = '<p class="error-message">Please enter valid inputs for all fields (Ticker, Forecast Years > 0, Number of Simulations >= 1).</p>';
+                return; // Stop execution
+            }
+
+            try {
+                const response = await fetch('/run_simulation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ticker, years, sims }),
+                });
+
+                const data = await response.json(); // Parse the JSON response from the server
+
+                outputDiv.innerHTML = ''; // Clear loading message
+
+                if (data.success) {
+                    // Create and append the text output
+                    const textElement = document.createElement('pre');
+                    textElement.textContent = data.text; // Use textContent for security and raw text
+                    outputDiv.appendChild(textElement);
+
+                    // Create and append the image
+                    const imgElement = document.createElement('img');
+                    imgElement.src = `data:image/png;base64,${data.image}`;
+                    imgElement.alt = `${ticker} Stock Price Forecast`;
+                    outputDiv.appendChild(imgElement);
+
+                } else {
+                    // Display error message from the server
+                    const errorElement = document.createElement('p');
+                    errorElement.className = 'error-message';
+                    errorElement.textContent = data.error || 'An unknown error occurred on the server.';
+                    outputDiv.appendChild(errorElement);
+                }
+
+            } catch (error) {
+                // Catch network errors or issues parsing JSON
+                console.error('Fetch error:', error);
+                outputDiv.innerHTML = `<p class="error-message">Failed to connect to the server or an unexpected error occurred: ${error.message}. Please ensure the server is running.</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
