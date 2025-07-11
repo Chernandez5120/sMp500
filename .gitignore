@@ -167,7 +167,9 @@ __pycache__/
 *.so
 
 # Data files
-data/
+data/csv_files/
+data/logs/
+data/models/
 *.csv
 *.pkl
 *.joblib
